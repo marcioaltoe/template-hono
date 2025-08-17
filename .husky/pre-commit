@@ -1,0 +1,11 @@
+set -euo pipefail
+
+echo "→ Pre-commit: quality gates (format, lint-staged)"
+
+# Format
+bun run format
+
+# Lint
+bun run lint-staged
+
+echo "✓ Pre-commit: todas as verificações passaram"

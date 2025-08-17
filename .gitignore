@@ -1,0 +1,61 @@
+# Dependencies
+node_modules/
+
+# Bun
+bun.lockb
+bun.lock
+.bun/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Output
+output/
+out/
+dist/
+*.parquet
+*.log
+*.tgz
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Build
+build/
+
+# Tests
+coverage/
+.test/
+*.lcov
+
+# Temp
+tmp/
+temp/
+*.tmp
+
+# Caches
+.eslintcache
+.cache
+*.tsbuildinfo
+
+# Logs
+logs
+_.log
+report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
+
+# Cache & Persistence
+.persistence/
+.serena/cache/
+
+# Environment variables
+.env
+.env.*
+.env.*.local
+!.env.example
+!.env.test

@@ -1,0 +1,4 @@
+src/
+tests/
+!*.md
+!package.json

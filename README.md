@@ -1,9 +1,4 @@
-# Cerberus Backend - Project Overview
-
-## Purpose
-
-Cerberus is a high-performance authentication microservice built for the Gesttione platform. It
-provides JWT-based authentication with multi-tenancy support.
+# Template - Project Overview
 
 ## Tech Stack
 
@@ -29,23 +24,3 @@ src/
 ├── infrastructure/ # Frameworks & Drivers (external interfaces)
 └── presentation/   # Interface Adapters (HTTP, validation)
 ```
-
-## Key Features
-
-- JWT authentication with RS256
-- Multi-tenancy with organization/company structure
-- Brazilian market support (CNPJ validation, LGPD compliance)
-- API key management for M2M authentication
-- Rate limiting and security middleware
-- Swagger API documentation
-
-## Performance Targets
-
-- Sub-100ms response times
-- Support for 10,000+ concurrent users
-- Horizontal scalability
-
-## Project Status
-
-The project is in early development stage (v0.1.0). Basic infrastructure is set up with logging,
-configuration, and initial API documentation routes.
