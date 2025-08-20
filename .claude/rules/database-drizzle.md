@@ -153,8 +153,8 @@ export const organizationsRelations = relations(organizations, ({ one, many }) =
 ### Base Repository Pattern
 
 ```typescript
-// infrastructure/database/repositories/base.repository.ts
-import { PostgresClient } from "../postgres/client";
+// src/infrastructure/repository/base-repository.ts
+import { PostgresClient } from "@/infrastructure/persistence/drizzle";
 import { and, eq, isNull } from "drizzle-orm";
 
 export abstract class BaseRepository<TSchema> {
@@ -203,9 +203,9 @@ export abstract class BaseRepository<TSchema> {
 ### Specific Repository
 
 ```typescript
-// infrastructure/database/repositories/organization.repository.ts
-import { organizations } from "../schemas";
-import { BaseRepository } from "./base.repository";
+// src/infrastructure/repository/postgres-organization-repository.ts
+import { organizations } from "@/infrastructure/persistence/drizzle/schema";
+import { BaseRepository } from "@/infrastructure/repository";
 import { eq, and, isNull } from "drizzle-orm";
 
 export class OrganizationRepository extends BaseRepository<typeof organizations> {

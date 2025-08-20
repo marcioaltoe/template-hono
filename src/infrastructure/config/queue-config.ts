@@ -1,27 +1,27 @@
-import { config as appConfig } from './config'
+import { config } from './config'
 
 /**
  * Queue-specific configuration
  * Provides simplified access to queue settings
  */
-export const config = {
+export const queueConfig = {
   get redis() {
-    return appConfig.getRedisOptions()
+    return config.getRedisOptions()
   },
 
   get queue() {
-    return appConfig.getQueueConfig()
+    return config.getQueueConfig()
   },
 
   get isDevelopment() {
-    return appConfig.isDevelopment()
+    return config.isDevelopment()
   },
 
   get isProduction() {
-    return appConfig.isProduction()
+    return config.isProduction()
   },
 
   get isTest() {
-    return appConfig.isTest()
+    return config.isTest()
   },
 }

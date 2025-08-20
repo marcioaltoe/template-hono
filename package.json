@@ -6,6 +6,8 @@
   "module": "main.ts",
   "scripts": {
     "clean": "rm -rf dist node_modules coverage bun.lockb bun.lock",
+    "craft": "barrel-craft",
+    "craft:clean": "barrel-craft clean --force",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push --force",
@@ -25,15 +27,15 @@
   },
   "dependencies": {
     "@hono/swagger-ui": "^0.5.2",
-    "@hono/typebox-validator": "^0.3.3",
-    "@sinclair/typebox": "^0.34.40",
+    "@hono/zod-validator": "^0.7.2",
     "bullmq": "^5.58.0",
     "drizzle-orm": "^0.44.4",
     "hono": "^4.9.2",
     "ioredis": "^5.7.0",
     "postgres": "^3.4.7",
     "ulid": "^3.0.1",
-    "winston": "^3.17.0"
+    "winston": "^3.17.0",
+    "zod": "^4.0.17"
   },
   "peerDependencies": {
     "typescript": "^5.9.2"

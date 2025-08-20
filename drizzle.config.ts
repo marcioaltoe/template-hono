@@ -21,7 +21,7 @@ const dbConfig: DBConnectionConfig = {
   port: Number.parseInt(process.env.DB_PORT || '5432', 10),
   user: process.env.DB_USER || 'postgres',
   password: process.env.DB_PASSWORD || 'postgres',
-  database: process.env.DB_NAME || 'hono_db',
+  database: process.env.DB_NAME || 'cerberus_dev',
   ssl: process.env.DB_SSL === 'true',
 }
 

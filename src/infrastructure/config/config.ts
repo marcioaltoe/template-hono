@@ -1,7 +1,6 @@
-import { Value } from '@sinclair/typebox/value'
+import { logger } from '@/infrastructure/logging'
 
-import { logger } from '../logging'
-import { type Env, EnvSchema, ProductionConstraints } from './env.schema'
+import { type Env, EnvSchema, ProductionEnvSchema } from './env.schema'
 
 /**
  * Configuration singleton for managing environment variables
@@ -34,16 +33,13 @@ export class Config {
       // Bun automatically loads .env files, so process.env is already populated
       const rawEnv = process.env
 
-      // No need to compile in this version of TypeBox
-      const compiled = EnvSchema
+      // Use Zod for validation and parsing with automatic coercion
+      const parseResult = EnvSchema.safeParse(rawEnv)
 
-      // Set defaults for missing values
-      const envWithDefaults = Value.Default(EnvSchema, rawEnv)
-
-      // Validate against schema
-      if (!Value.Check(compiled, envWithDefaults)) {
-        const errors = [...Value.Errors(compiled, envWithDefaults)]
-        const errorMessages = errors.map((e) => `${e.path}: ${e.message}`).join(', ')
+      if (!parseResult.success) {
+        const errorMessages = parseResult.error.issues
+          .map((issue: any) => `${issue.path.join('.')}: ${issue.message}`)
+          .join(', ')
         return {
           isSuccess: false,
           isFailure: true,
@@ -51,8 +47,7 @@ export class Config {
         }
       }
 
-      // Decode transformations
-      const decodedEnv = Value.Decode(compiled, envWithDefaults) as unknown as Env
+      const decodedEnv = parseResult.data
 
       // Production-specific validations
       if (decodedEnv.NODE_ENV === 'production') {
@@ -91,39 +86,23 @@ export class Config {
     isFailure: boolean
     error?: string
   } {
-    const errors: string[] = []
+    // Use Zod production schema for comprehensive validation
+    const productionResult = ProductionEnvSchema.safeParse(env)
 
-    // Check JWT secret length
-    if (env.JWT_SECRET.length < ProductionConstraints.JWT_SECRET_MIN_LENGTH) {
-      errors.push(
-        `JWT_SECRET must be at least ${ProductionConstraints.JWT_SECRET_MIN_LENGTH} characters in production`,
-      )
-    }
+    if (!productionResult.success) {
+      const errorMessages = productionResult.error.issues
+        .map((issue: any) => `${issue.path.join('.')}: ${issue.message}`)
+        .join('\n')
 
-    // Check encryption key length
-    if (env.ENCRYPTION_KEY.length < ProductionConstraints.ENCRYPTION_KEY_MIN_LENGTH) {
-      errors.push(
-        `ENCRYPTION_KEY must be at least ${ProductionConstraints.ENCRYPTION_KEY_MIN_LENGTH} characters in production`,
-      )
-    }
-
-    // Check API key salt length
-    if (env.API_KEY_SALT.length < ProductionConstraints.API_KEY_SALT_MIN_LENGTH) {
-      errors.push(
-        `API_KEY_SALT must be at least ${ProductionConstraints.API_KEY_SALT_MIN_LENGTH} characters in production`,
-      )
-    }
-
-    // Check for forbidden default values
-    for (const forbidden of ProductionConstraints.FORBIDDEN_DEFAULTS) {
-      if (
-        env.JWT_SECRET === forbidden ||
-        env.ENCRYPTION_KEY === forbidden ||
-        env.API_KEY_SALT === forbidden
-      ) {
-        errors.push(`Production environment contains development default value: ${forbidden}`)
+      return {
+        isSuccess: false,
+        isFailure: true,
+        error: `Production configuration validation failed:\n${errorMessages}`,
       }
     }
+
+    // Additional production-specific checks (if needed beyond Zod schema)
+    const errors: string[] = []
 
     // Ensure SSL is enabled for database in production
     if (!env.POSTGRES_SSL) {
@@ -201,15 +180,10 @@ export class Config {
 
   /**
    * Get database connection URL
-   * Prefers DATABASE_URL if set, otherwise constructs from individual fields
+   * Constructs from individual database fields
    */
   getDatabaseUrl(): string {
     const env = this.getEnv()
-
-    // Use DATABASE_URL if provided
-    if (env.DATABASE_URL) {
-      return env.DATABASE_URL
-    }
 
     // Construct from individual fields
     const auth = `${env.POSTGRES_USER}:${env.POSTGRES_PASSWORD}`

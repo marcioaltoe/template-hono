@@ -1,7 +1,8 @@
 import { drizzle } from 'drizzle-orm/postgres-js'
 import postgres from 'postgres'
 
-import { logger } from '../logging'
+import { logger } from '@/infrastructure/logging'
+
 import { config } from './config'
 
 /**
@@ -17,25 +18,15 @@ export class DatabaseConfig {
   static getConnectionConfig() {
     const env = config.getEnv()
 
-    // Use DATABASE_URL if provided, otherwise build from components
-    if (env.DATABASE_URL) {
-      return {
-        connectionString: env.DATABASE_URL,
-        max: 10, // connection pool size
-        idle_timeout: 20,
-        connect_timeout: 10,
-      }
-    }
-
-    // Build configuration from individual fields
+    // Build configuration from database fields
     return {
       host: env.POSTGRES_HOST,
-      port: env.POSTGRES_PORT, // Already a number from TypeBox transform
+      port: env.POSTGRES_PORT, // Already a number from Zod coerce
       database: env.POSTGRES_DB,
       username: env.POSTGRES_USER,
       password: env.POSTGRES_PASSWORD,
       ssl: env.POSTGRES_SSL ? { rejectUnauthorized: true } : false,
-      max: 10, // connection pool size
+      max: env.POSTGRES_MAX_CONNECTIONS,
       idle_timeout: 20,
       connect_timeout: 10,
     }
@@ -49,22 +40,14 @@ export class DatabaseConfig {
     if (!DatabaseConfig.connection) {
       const connectionConfig = DatabaseConfig.getConnectionConfig()
 
-      // Create postgres connection
-      if ('connectionString' in connectionConfig && connectionConfig.connectionString) {
-        DatabaseConfig.connection = postgres(connectionConfig.connectionString, {
-          max: connectionConfig.max,
-          idle_timeout: connectionConfig.idle_timeout,
-          connect_timeout: connectionConfig.connect_timeout,
-        })
-      } else {
-        DatabaseConfig.connection = postgres(
-          connectionConfig as postgres.Options<Record<string, never>>,
-        )
-      }
+      // Create postgres connection with individual fields
+      DatabaseConfig.connection = postgres(
+        connectionConfig as postgres.Options<Record<string, never>>,
+      )
 
       logger.info('Database connection created', {
-        host: connectionConfig.host || 'from-url',
-        database: connectionConfig.database || 'from-url',
+        host: connectionConfig.host,
+        database: connectionConfig.database,
         ssl: Boolean(connectionConfig.ssl),
       })
     }

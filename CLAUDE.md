@@ -1,12 +1,10 @@
-# Development Standards & Guidelines
-
-This file provides guidance to Claude Code (claude.ai/code) when working in this repository.
+# Cerberus Authentication Service - Claude Guide
 
 ## Project Overview
 
-Vulcanus MVP is a high-performance, enterprise-grade ETL (Extract, Transform, Load) integration
-platform designed for seamless ERP system integration. Built with Clean Architecture principles and
-Domain-Driven Design, it provides a robust, scalable solution for multi-tenant SaaS deployments.
+Cerberus is a high-performance authentication microservice built with Clean Architecture,
+Domain-Driven Design (DDD), and SOLID principles. It provides JWT-based authentication with
+multi-tenancy support for the Gesttione platform.
 
 ## Quick Commands
 
@@ -16,6 +14,25 @@ Domain-Driven Design, it provides a robust, scalable solution for multi-tenant S
 - **Format code**: `bun format`
 - **Lint**: `bun lint`
 - **Type check**: `bun type-check`
+- **Generate barrel files**: `bun run craft` (criar/atualizar index.ts)
+- **Clean barrel files**: `bun run craft:clean` (limpar index.ts antigos)
+
+## Import Strategy - Barrel Files
+
+Este projeto usa **barrel-craft** para gerar arquivos index.ts automaticamente, permitindo imports
+limpos:
+
+```typescript
+// ✅ Bom - usa barrel files
+import { UserIdentity } from "@/domain/aggregate";
+import { Email, Password } from "@/domain/value-object";
+
+// ❌ Evitar - imports com caminhos relativos
+import { UserIdentity } from "../../domain/aggregate/user-identity.aggregate";
+```
+
+**IMPORTANTE**: Após criar novos arquivos ou mover arquivos existentes, execute `bun run craft` para
+atualizar os barrel files.
 
 ## Rules and Standards (source of truth)
 
@@ -32,7 +49,3 @@ Domain-Driven Design, it provides a robust, scalable solution for multi-tenant S
 - `.claude/rules/folder-structure.md` - Project organization
 - `.claude/rules/logging.md` - Winston logging patterns
 - `.claude/rules/solid.md` - SOLID principles with examples
-
----
-
-Last Updated: August 2025 Version: 1.0.0

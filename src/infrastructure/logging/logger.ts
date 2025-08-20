@@ -17,7 +17,7 @@ export const logger = winston.createLogger({
     json(),
   ),
   defaultMeta: {
-    service: 'template-hono',
+    service: 'cerberus',
     environment: process.env.NODE_ENV || 'development',
   },
   transports: [

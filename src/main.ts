@@ -1,66 +1,84 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
+import { logger } from 'hono/logger'
 
-import { config } from './infrastructure/config/config'
-import { ConnectionValidator } from './infrastructure/config/validator'
-import { logger, loggingMiddleware } from './infrastructure/logging'
-import { docsRoutes } from './presentation/api/routes/docs.routes'
+import { RedisService } from '@/infrastructure/cache'
+import {
+  config,
+  createRedisConnection,
+  DatabaseConfig,
+  getRedisConfig,
+} from '@/infrastructure/config'
 
-// Initialize configuration
-const initResult = config.initialize()
-if (initResult.isFailure) {
-  logger.error('Failed to initialize configuration', new Error(initResult.error || 'Unknown error'))
+// Initialize configuration first
+const configInit = config.initialize()
+if (configInit.isFailure) {
+  console.error('❌ Configuration error:', configInit.error)
   process.exit(1)
 }
 
-// Validate connections in production
-if (config.isProduction()) {
-  ConnectionValidator.validateProduction().then((result) => {
-    if (result.isFailure) {
-      logger.error('Production validation failed', new Error(result.error || 'Unknown error'))
-      process.exit(1)
-    }
-  })
-}
-
+// Initialize app
 const app = new Hono()
 
-// Middleware
-app.use('*', cors())
-app.use('*', loggingMiddleware)
+// Global middleware
+app.use('*', logger())
+app.use(
+  '*',
+  cors({
+    origin: config.get('CORS_ORIGINS').split(','),
+    credentials: true,
+  }),
+)
 
 // Health check
-app.get('/', (c) => {
+app.get('/health', (c) => {
   return c.json({
     status: 'ok',
-    service: 'Hono',
-    version: '0.1.0',
-    documentation: `${c.req.url.replace(c.req.path, '')}/api/docs`,
-    endpoints: {
-      health: '/',
-      docs: '/api/docs',
-    },
+    timestamp: new Date().toISOString(),
+    environment: config.getEnvironment(),
   })
 })
 
-// API routes
-// app.route('/api/organizations', organizationRoutes)
+// Initialize services
+async function bootstrap() {
+  try {
+    // Database connection
+    const _db = DatabaseConfig.getDrizzle()
 
-// API documentation
-app.route('/api/docs', docsRoutes)
+    // Test database connection
+    const dbTest = await DatabaseConfig.testConnection()
+    if (dbTest.isFailure) {
+      throw new Error(dbTest.error)
+    }
 
-// Error handling
-app.onError((err, c) => {
-  logger.error('Unhandled error', err instanceof Error ? err : new Error(String(err)))
-  return c.json({ error: 'Internal Server Error' }, 500)
-})
+    // Redis connection
+    const redisConfig = getRedisConfig()
+    const redis = createRedisConnection(redisConfig)
+    const _cacheService = new RedisService(redis)
 
-// Not found
-app.notFound((c) => {
-  return c.json({ error: 'Not Found' }, 404)
-})
+    // Start server
+    const server = Bun.serve({
+      port: config.get('PORT'),
+      hostname: config.get('HOST'),
+      fetch: app.fetch,
+    })
 
-const port = process.env.PORT || 3000
-logger.info(`Server is running on port ${port}`, { port })
+    console.log(`🚀 Server running at http://${config.get('HOST')}:${config.get('PORT')}`)
+    console.log(`📊 Environment: ${config.getEnvironment()}`)
 
-export default app
+    // Graceful shutdown
+    process.on('SIGTERM', async () => {
+      console.log('SIGTERM received, shutting down gracefully...')
+      server.stop()
+      redis.disconnect()
+      await DatabaseConfig.close()
+      process.exit(0)
+    })
+  } catch (error) {
+    console.error('❌ Failed to start server:', error)
+    process.exit(1)
+  }
+}
+
+// Start the application
+bootstrap()
