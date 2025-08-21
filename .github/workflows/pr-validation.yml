@@ -1,0 +1,46 @@
+name: PR Validation
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+
+jobs:
+  validate-source-branch:
+    name: Validate PR Source Branch
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Check if PR is from dev branch
+        run: |
+          if [ "${{ github.head_ref }}" != "dev" ]; then
+            echo "❌ Error: PRs to main branch are only allowed from 'dev' branch"
+            echo "Current branch: ${{ github.head_ref }}"
+            echo ""
+            echo "Please follow the Git Flow:"
+            echo "1. Create feature branches from 'dev'"
+            echo "2. Merge feature branches to 'dev' via PR"
+            echo "3. Merge 'dev' to 'main' via PR for releases"
+            exit 1
+          fi
+          echo "✅ Valid PR from dev branch to main"
+      
+      - name: Add comment if validation fails
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## ❌ PR Validation Failed
+              
+              This PR cannot be merged because it's not from the \`dev\` branch.
+              
+              **Git Flow Process:**
+              1. Feature branches → \`dev\` (via PR)
+              2. \`dev\` → \`main\` (via PR for releases only)
+              
+              Please create your PR to the \`dev\` branch instead.`
+            })

@@ -24,3 +24,24 @@ src/
 ├── infrastructure/ # Frameworks & Drivers (external interfaces)
 └── presentation/   # Interface Adapters (HTTP, validation)
 ```
+
+## Development Workflow
+
+This project follows a strict Git Flow branching strategy. For detailed information about our
+branching model, PR process, and synchronization strategies, see:
+
+**[Git Flow Guide](./docs/git-flow-guide.md)**
+
+### Quick Start
+
+```bash
+# Create feature branch from dev
+git checkout dev && git pull origin dev
+git checkout -b feature/your-feature
+
+# Make changes and push
+git add . && git commit -m "feat: description"
+git push -u origin feature/your-feature
+
+# Create PR to dev via GitHub
+```
